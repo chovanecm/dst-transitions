@@ -1,0 +1,28 @@
+plugins {
+    id 'application'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.0-Beta'
+}
+
+group = 'cz.chovanecm'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+kotlin {
+    jvmToolchain(20)
+}
+
+application {
+    mainClassName = 'MainKt'
+}
