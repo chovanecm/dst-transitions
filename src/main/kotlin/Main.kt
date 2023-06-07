@@ -3,6 +3,10 @@ import java.time.zone.ZoneRulesException
 import java.time.zone.ZoneRulesProvider
 import java.util.*
 
+/**
+ * This program prints a CSV of all timezones and their offsets from UTC.
+ * It also prints the previous and next DST change for each timezone.
+ */
 fun main(args: Array<String>) {
     // Get all timezones
     val timezones = TimeZone.getAvailableIDs()
