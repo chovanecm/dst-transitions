@@ -8,11 +8,24 @@ import java.util.*
  * It also prints the previous and next DST change for each timezone.
  */
 fun main(args: Array<String>) {
+    // Get start date and end date from the arguments. The dates are in format YYYY-MM-DD
+    val startDate = if (args.size > 0) args[0] else "2019-01-01"
+    val endDate = if (args.size > 1) args[1] else "2020-01-01"
+
+    // If not arguments are provided, print help and exit
+    if (args.isEmpty()) {
+        println("Usage: java -jar dst.jar <start date> <end date>")
+        println("Example: java -jar dst.jar 2019-01-01 2020-01-01")
+        return
+    }
+
+    var startDateAsInstant = Instant.parse("${startDate}T00:00:00Z")
+    var endDateAsInstant = Instant.parse("${endDate}T00:00:00Z")
+
     // Get all timezones
     val timezones = TimeZone.getAvailableIDs()
 
-    // Print the header
-    println("Timezone,Offset from UTC (min),Has DST,DST Offset from UTC (min),Previous offset from UTC, Previous DST Change,Current offset from UTC, Next DST Change, Next offset from UTC, Second Next DST Change, Second Next offset from UTC")
+    println("Timezone,Offset from UTC (min), Has DST, DST Offset from UTC (min), Offset before transition date, Transition date, Offset after transition date")
 
     // For each timezone, print the timezone ID and the offset from UTC
     timezones.forEach { timezone ->
@@ -26,37 +39,23 @@ fun main(args: Array<String>) {
         val offsetFromUtc = offsetToMinutes(tz.rawOffset)
         val hasDst = tz.useDaylightTime()
         val dstOffset = offsetFromUtc + offsetToMinutes(tz.dstSavings)
-        val previousDstChange: String;
-        val nextDstChange: String;
-        val secondNextDstChange: String;
-        var (previousOffset, currentOffset, nextOffset, secondNextOffset) = arrayOf(
-            offsetFromUtc,
-            offsetFromUtc,
-            offsetFromUtc,
-            offsetFromUtc
-        )
-        if (hasDst && rules != null) {
-            val previousTransition = rules.previousTransition(Instant.now())
-            val nextTransition = rules.nextTransition(Instant.now())
-            val secondNextTransition = rules.nextTransition(nextTransition.instant)
-            previousOffset = previousTransition.offsetBefore.totalSeconds / 60
-            currentOffset = previousTransition.offsetAfter.totalSeconds / 60
-            nextOffset = nextTransition.offsetAfter.totalSeconds / 60
-            secondNextOffset = secondNextTransition.offsetAfter.totalSeconds / 60
-            previousDstChange = rules.previousTransition(Instant.now())
-                .instant.toString()
-            nextDstChange = rules.nextTransition(Instant.now())
-                .instant.toString()
-            secondNextDstChange = secondNextTransition.instant.toString()
 
-        } else {
-            previousDstChange = ""
-            nextDstChange = ""
-            secondNextDstChange = ""
+        if (!hasDst || rules == null) {
+            // Print the variables as CSV
+            println("$timezone,$offsetFromUtc,$hasDst,$dstOffset,,,,,")
+            return@forEach
         }
 
-        // Print the variables as CSV
-        println("$timezone,$offsetFromUtc,$hasDst,$dstOffset,$previousOffset,$previousDstChange,$currentOffset,$nextDstChange,$nextOffset,$secondNextDstChange,$secondNextOffset")
+        // for each date between start and end date, identify when the dst transition happens and print the offset before and after
+        var date = startDateAsInstant
+        while (date.isBefore(endDateAsInstant)) {
+            val transition = rules.nextTransition(date)
+            val offsetBefore = transition.offsetBefore.totalSeconds / 60
+            val offsetAfter = transition.offsetAfter.totalSeconds / 60
+            val transitionDate = transition.instant.toString()
+            println("$timezone,$offsetFromUtc,$hasDst,$dstOffset,$offsetBefore,$transitionDate,$offsetAfter")
+            date = transition.instant
+        }
     }
 }
 
