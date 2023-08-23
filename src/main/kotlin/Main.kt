@@ -33,7 +33,7 @@ fun main(args: Array<String>) {
         val rules = try {
             ZoneRulesProvider.getRules(timezone, false)
         } catch (e: ZoneRulesException) {
-            null
+            TimeZone.getTimeZone(timezone).toZoneId().rules
         }
         val tz = TimeZone.getTimeZone(timezone)
         val offsetFromUtc = offsetToMinutes(tz.rawOffset)
